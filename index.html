@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./icon-192.png">
 <title>Suivi de mes livres</title>
 <style>
 *{box-sizing:border-box}
@@ -203,7 +201,7 @@ function addSale(){
  const bookId=sBook.value, book=db.books.find(b=>b.id===bookId);
  if(!book){alert("Choisis un livre.");return}
  const price=Number(sPrice.value)||0,fee=Number(sFee.value)||0;if(price<=0){alert("Indique le prix de vente.");return}
- db.sales.push({id:uid(),bookId,title:book.title,platform:sPlatform.value,price,fee,date:sDate.value||today(),buy:Number(book.buy)||0,buyFee:Number(book.buyFee)||0,previousStatus:book.status||"En vente"});
+ db.sales.push({id:uid(),bookId,title:book.title,platform:sPlatform.value,price,fee,date:sDate.value||today(),buy:Number(book.buy)||0,buyFee:Number(book.buyFee)||0});
  book.status="Vendu";save();alert("Vente enregistrée.");
  sPrice.value="";sFee.value="0";
 }
@@ -229,13 +227,13 @@ function renderBooks(){
   <span class="badge">${esc(b.status)}</span> ${b.platforms.map(p=>`<span class="badge">${esc(p)}</span>`).join("")}
   <div class="small">Achat : ${b.buy===""||b.buy==null?"inconnu":euro(cost)} · Prix souhaité : ${b.wanted?euro(b.wanted):"—"} · Marge potentielle : <span class="marge">${b.wanted?euro(margin):"—"}</span></div>
   ${b.isbn?`<div class="small">ISBN : ${esc(b.isbn)}</div>`:""}
-  <div class="row"><button type="button" class="secondary" onclick="editBook('${b.id}')">Modifier</button><button type="button" class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
+  <div class="row"><button class="secondary" onclick="editBook('${b.id}')">Modifier</button><button class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
  }).join("")||'<div class="empty">Aucun livre trouvé.</div>';
 }
 function renderPurchases(){
  purchaseList.innerHTML=db.purchases.slice().reverse().map(p=>{
   const type=p.type==="lot"?`Lot · ${p.bookCount} livres · coût moyen indicatif ${euro(p.equalCost)}`:"Livre individuel";
-  return `<div class="item"><strong>${type}</strong><br><span class="small">${p.date} · ${esc(p.seller)}</span><br>Total : <b>${euro(p.total)}</b>${p.notes?`<br><span class="small">${esc(p.notes)}</span>`:""}<div class="row"><button type="button" class="danger" onclick="deletePurchase('${p.id}')">Supprimer</button></div></div>`;
+  return `<div class="item"><strong>${type}</strong><br><span class="small">${p.date} · ${esc(p.seller)}</span><br>Total : <b>${euro(p.total)}</b>${p.notes?`<br><span class="small">${esc(p.notes)}</span>`:""}<div class="row"><button class="danger" onclick="deletePurchase('${p.id}')">Supprimer</button></div></div>`;
  }).join("")||'<div class="empty">Aucun achat enregistré.</div>';
 
  const lots=db.purchases.filter(p=>p.type==="lot");
@@ -243,14 +241,14 @@ function renderPurchases(){
    const created=p.bookIds?.length||0;
    return `<div class="item"><strong>Lot du ${p.date} — ${esc(p.seller)}</strong><br>
    ${created}/${p.bookCount} livres créés · Total ${euro(p.total)} · Moyenne ${euro(p.equalCost)}
-   <div class="row"><button type="button" class="secondary" onclick="createBooksFromLot('${p.id}')">Créer les livres</button>
-   ${created?`<button type="button" class="secondary" onclick="editLotCosts('${p.id}')">Répartir le coût</button>`:""}
-   <button type="button" class="danger" onclick="deletePurchase('${p.id}')">Supprimer le lot</button></div></div>`;
+   <div class="row"><button class="secondary" onclick="createBooksFromLot('${p.id}')">Créer les livres</button>
+   ${created?`<button class="secondary" onclick="editLotCosts('${p.id}')">Répartir le coût</button>`:""}
+   <button class="danger" onclick="deletePurchase('${p.id}')">Supprimer le lot</button></div></div>`;
  }).join("")||'<div class="empty">Aucun lot à répartir.</div>';
 }
 function renderSales(){
  sBook.innerHTML=db.books.filter(b=>b.status!=="Vendu").map(b=>`<option value="${b.id}">${esc(b.title)}${b.author?" — "+esc(b.author):""}${b.isbn?" · ISBN "+esc(b.isbn):""}</option>`).join("");
- salesList.innerHTML=db.sales.slice().reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br>${s.date} · ${esc(s.platform)} · vendu ${euro(s.price)} · frais ${euro(s.fee)}<br>Marge réelle : <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b><div class="row"><button type="button" class="danger" onclick="deleteSale(\'${s.id}\')">Supprimer</button></div></div>`).join("")||'<div class="empty">Aucune vente.</div>';
+ salesList.innerHTML=db.sales.slice().reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br>${s.date} · ${s.platform} · vendu ${euro(s.price)} · frais ${euro(s.fee)}<br>Marge réelle : <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b></div>`).join("")||'<div class="empty">Aucune vente.</div>';
 }
 function editBook(id){
  const b=db.books.find(x=>x.id===id); if(!b)return;
@@ -275,15 +273,6 @@ function deletePurchase(id){
  if(ids.size) db.books=db.books.filter(b=>!ids.has(b.id));
  save();
  alert("Achat supprimé.");
-}
-function deleteSale(id){
- const s=db.sales.find(x=>x.id===id); if(!s)return;
- if(!confirm("Supprimer cette vente ?"))return;
- db.sales=db.sales.filter(x=>x.id!==id);
- const book=db.books.find(b=>b.id===s.bookId);
- if(book) book.status=s.previousStatus||"En vente";
- save();
- alert("Vente supprimée.");
 }
 function deleteBook(id){if(confirm("Supprimer ce livre ?")){db.books=db.books.filter(b=>b.id!==id);save()}}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
