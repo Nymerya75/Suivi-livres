@@ -1,4 +1,4 @@
-const CACHE_NAME = "suivi-livres-pwa-v2";
+const CACHE_NAME = "suivi-livres-pwa-v3";
 const ASSETS = [
   "./",
   "./index.html",
