@@ -233,7 +233,7 @@ function renderBooks(){
 function renderPurchases(){
  purchaseList.innerHTML=db.purchases.slice().reverse().map(p=>{
   const type=p.type==="lot"?`Lot · ${p.bookCount} livres · coût moyen indicatif ${euro(p.equalCost)}`:"Livre individuel";
-  return `<div class="item"><strong>${type}</strong><br><span class="small">${p.date} · ${esc(p.seller)}</span><br>Total : <b>${euro(p.total)}</b>${p.notes?`<br><span class="small">${esc(p.notes)}</span>`:""}</div>`;
+  return `<div class="item"><strong>${type}</strong><br><span class="small">${p.date} · ${esc(p.seller)}</span><br>Total : <b>${euro(p.total)}</b>${p.notes?`<br><span class="small">${esc(p.notes)}</span>`:""}<div class="row"><button class="danger" onclick="deletePurchase('${p.id}')">Supprimer</button></div></div>`;
  }).join("")||'<div class="empty">Aucun achat enregistré.</div>';
 
  const lots=db.purchases.filter(p=>p.type==="lot");
@@ -242,7 +242,8 @@ function renderPurchases(){
    return `<div class="item"><strong>Lot du ${p.date} — ${esc(p.seller)}</strong><br>
    ${created}/${p.bookCount} livres créés · Total ${euro(p.total)} · Moyenne ${euro(p.equalCost)}
    <div class="row"><button class="secondary" onclick="createBooksFromLot('${p.id}')">Créer les livres</button>
-   ${created?`<button class="secondary" onclick="editLotCosts('${p.id}')">Répartir le coût</button>`:""}</div></div>`;
+   ${created?`<button class="secondary" onclick="editLotCosts('${p.id}')">Répartir le coût</button>`:""}
+   <button class="danger" onclick="deletePurchase('${p.id}')">Supprimer le lot</button></div></div>`;
  }).join("")||'<div class="empty">Aucun lot à répartir.</div>';
 }
 function renderSales(){
@@ -259,6 +260,19 @@ function editBook(id){
  const status=prompt("Statut (À mettre en vente / En vente / En attente / À identifier / Retiré / Vendu) :",b.status||""); if(status===null)return;
  b.title=title.trim(); b.author=author.trim(); b.isbn=isbn.trim(); b.wanted=wanted; b.status=status.trim()||b.status;
  save(); alert("Livre modifié.");
+}
+function deletePurchase(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ const count=p.bookIds?.length||0;
+ const message=p.type==="lot" && count
+   ? `Supprimer ce lot et les ${count} livre(s) créés avec lui ?`
+   : "Supprimer cet achat ?";
+ if(!confirm(message))return;
+ const ids=new Set(p.bookIds||[]);
+ db.purchases=db.purchases.filter(x=>x.id!==id);
+ if(ids.size) db.books=db.books.filter(b=>!ids.has(b.id));
+ save();
+ alert("Achat supprimé.");
 }
 function deleteBook(id){if(confirm("Supprimer ce livre ?")){db.books=db.books.filter(b=>b.id!==id);save()}}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
