@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Suivi de mes livres</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f5f7;color:#222}
+header{background:linear-gradient(135deg,#071326 0%,#0b1d38 55%,#061022 100%);color:#eef2f6;padding:16px 16px 18px;position:sticky;top:0;z-index:5;box-shadow:0 3px 12px rgba(0,0,0,.24)}
+header h1{margin:0;font-size:21px;color:#e2e7ed;display:flex;align-items:center;font-weight:700;letter-spacing:-.2px}
+nav{display:flex;gap:7px;overflow:auto;margin-top:12px}
+nav button{border:0;border-radius:9px;padding:9px 12px;white-space:nowrap;background:#34445a;color:#eef2f6}
+nav button.active{background:linear-gradient(180deg,#f4f6f8,#d8dde3);color:#17202b}
+main{max-width:900px;margin:auto;padding:14px}
+section{display:none}
+section.active{display:block}
+.card{background:#fff;border-radius:14px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #0000000d}
+h2{font-size:19px;margin:0 0 13px}
+h3{font-size:16px;margin:8px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:#f1f1f4;border-radius:12px;padding:12px}
+.stat b{display:block;font-size:22px;margin-top:5px}
+label{display:block;font-size:13px;font-weight:bold;margin:10px 0 5px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:9px;font-size:15px;background:#fff}
+textarea{min-height:70px}
+button.primary{background:#222;color:white;border:0;border-radius:9px;padding:11px 15px;margin-top:12px}
+button.secondary{background:#eee;border:0;border-radius:9px;padding:9px 12px}
+button.danger{background:#b42318;color:white;border:0;border-radius:9px;padding:8px 10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item{border:1px solid #ddd;border-radius:11px;padding:12px;margin:8px 0;background:#fff}
+.item strong{font-size:16px}
+.small{font-size:12px;color:#666}
+.badge{display:inline-block;padding:4px 7px;border-radius:7px;background:#eee;font-size:12px;margin:2px}
+.marge{font-weight:bold}
+.empty{color:#777;text-align:center;padding:25px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{font-weight:normal;margin:0;background:#f0f0f2;padding:7px 9px;border-radius:8px}
+.checks input{width:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+@media(max-width:600px){main{padding:10px}.grid{grid-template-columns:repeat(2,1fr)}}
+.books-silver{display:inline-flex;width:58px;height:46px;align-items:center;justify-content:center;margin-right:4px;flex:none;filter:drop-shadow(0 1px 5px rgba(220,230,240,.24))}.books-silver img{width:58px;height:46px;object-fit:contain}
+</style>
+</head>
+<body>
+<header>
+<h1><span class="books-silver" aria-hidden="true"><img src="data:image/png;base64,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" alt=""></span><span>Suivi de mes livres</span></h1>
+<nav>
+<button class="active" data-tab="dashboard">Tableau de bord</button>
+<button data-tab="books">Mes livres</button>
+<button data-tab="purchases">Achats</button>
+<button data-tab="sales">Ventes</button>
+</nav>
+</header>
+<main>
+<section id="dashboard" class="active">
+<div class="card"><h2>Tableau de bord</h2><div class="grid" id="stats"></div></div>
+<div class="card"><h3>Dernières ventes</h3><div id="dashSales"></div></div>
+</section>
+
+<section id="books">
+<div class="card">
+<h2>Ajouter un livre</h2>
+<label>Titre *</label><input id="bTitle">
+<label>Auteur</label><input id="bAuthor">
+<label>ISBN</label><input id="bIsbn">
+<label>État</label><select id="bCondition"><option>Très bon état</option><option>Bon état</option><option>État correct</option><option>À restaurer</option><option>Non identifié</option></select>
+<label>Prix d'achat (€)</label><input id="bBuy" type="number" step="0.01">
+<label>Frais d'achat (€)</label><input id="bBuyFee" type="number" step="0.01" value="0">
+<label>Prix de vente souhaité (€)</label><input id="bWanted" type="number" step="0.01">
+<label>Plateformes</label>
+<div class="checks">
+<label><input type="checkbox" name="platform" value="Vinted"> Vinted</label>
+<label><input type="checkbox" name="platform" value="Leboncoin"> Leboncoin</label>
+<label><input type="checkbox" name="platform" value="Le Bouquin Français"> Le Bouquin Français</label>
+<label><input type="checkbox" name="platform" value="Book Village"> Book Village</label>
+<label><input type="checkbox" name="platform" value="Autre"> Autre</label>
+</div>
+<label>Statut</label><select id="bStatus"><option>À mettre en vente</option><option>En vente</option><option>En attente</option><option>À identifier</option><option>Retiré</option></select>
+<label>Notes</label><textarea id="bNotes"></textarea>
+<button class="primary" onclick="addBook()">Ajouter le livre</button>
+</div>
+<div class="card">
+<h2>Mon stock</h2>
+<input id="search" placeholder="🔎 Rechercher titre, auteur ou ISBN" oninput="renderBooks()">
+<div id="booksList"></div>
+</div>
+</section>
+
+<section id="purchases">
+<div class="card">
+<h2>Nouvel achat auprès d'un particulier</h2>
+<label>Type d'achat</label><select id="pType" onchange="toggleLot()"><option value="individual">Livre individuel</option><option value="lot">Lot de livres</option></select>
+<label>Date</label><input id="pDate" type="date">
+<label>Vendeur / particulier</label><input id="pSeller">
+<label>Prix payé (€)</label><input id="pPrice" type="number" step="0.01">
+<label>Frais (€)</label><input id="pFee" type="number" step="0.01" value="0">
+<div id="individualFields">
+<label>Titre du livre</label><input id="pBookTitle">
+</div>
+<div id="lotFields" style="display:none">
+<label>Nombre de livres dans le lot</label><input id="pCount" type="number" min="1" oninput="updateLotPreview()">
+<p class="small">Le coût moyen est indicatif. Après l'achat, tu pourras créer les livres du lot et attribuer à chacun son coût réel.</p>
+<div id="lotPreview"></div>
+</div>
+<label>Notes</label><textarea id="pNotes"></textarea>
+<button class="primary" onclick="addPurchase()">Enregistrer l'achat</button>
+</div>
+<div class="card"><h2>Historique des achats</h2><div id="purchaseList"></div></div>
+<div class="card"><h2>Lots à répartir</h2><div id="lotAllocationList"></div></div>
+</section>
+
+<section id="sales">
+<div class="card">
+<h2>Enregistrer une vente</h2>
+<label>Livre</label><select id="sBook"></select>
+<label>Plateforme</label><select id="sPlatform"><option>Vinted</option><option>Leboncoin</option><option>Le Bouquin Français</option><option>Book Village</option><option>Autre</option></select>
+<label>Prix réellement vendu (€)</label><input id="sPrice" type="number" step="0.01">
+<label>Frais de vente (€)</label><input id="sFee" type="number" step="0.01" value="0">
+<label>Date</label><input id="sDate" type="date">
+<button class="primary" onclick="addSale()">Enregistrer la vente</button>
+</div>
+<div class="card"><h2>Historique des ventes</h2><div id="salesList"></div></div>
+</section>
+</main>
+
+<script>
+const KEY="suiviLivresV1Plus";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"books":[],"purchases":[],"sales":[]}');
+const euro=n=> (Number(n)||0).toFixed(2).replace('.',',')+" €";
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));renderAll()};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>new Date().toISOString().slice(0,10);
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");renderAll();
+});
+document.getElementById("pDate").value=today();
+document.getElementById("sDate").value=today();
+
+function toggleLot(){
+ const lot=document.getElementById("pType").value==="lot";
+ document.getElementById("lotFields").style.display=lot?"block":"none";
+ document.getElementById("individualFields").style.display=lot?"none":"block";
+}
+function addBook(){
+ const title=bTitle.value.trim(); if(!title){alert("Indique au moins le titre.");return}
+ const platforms=[...document.querySelectorAll('input[name="platform"]:checked')].map(x=>x.value);
+ db.books.push({id:uid(),title,author:bAuthor.value.trim(),isbn:bIsbn.value.trim(),condition:bCondition.value,buy:bBuy.value,buyFee:bBuyFee.value,wanted:bWanted.value,status:bStatus.value,platforms,notes:bNotes.value.trim(),purchaseId:null});
+ ["bTitle","bAuthor","bIsbn","bBuy","bWanted","bNotes"].forEach(id=>document.getElementById(id).value="");
+ document.querySelectorAll('input[name="platform"]').forEach(x=>x.checked=false);
+ save(); alert("Livre ajouté.");
+}
+function updateLotPreview(){
+ const count=Number(pCount.value)||0, price=Number(pPrice.value)||0, fee=Number(pFee.value)||0;
+ lotPreview.innerHTML=count>0?`<div class="small">Total : <b>${euro(price+fee)}</b> · coût moyen indicatif : <b>${euro((price+fee)/count)}</b>/livre.</div>`:"";
+}
+function addPurchase(){
+ const type=pType.value, price=Number(pPrice.value)||0, fee=Number(pFee.value)||0;
+ if(!pDate.value||!pSeller.value.trim()||price<=0){alert("Date, vendeur et prix sont nécessaires.");return}
+ const p={id:uid(),type,date:pDate.value,seller:pSeller.value.trim(),price,fee,total:price+fee,notes:pNotes.value.trim(),bookIds:[]};
+ if(type==="individual"){
+   const title=pBookTitle.value.trim(); if(!title){alert("Indique le titre du livre.");return}
+   const book={id:uid(),title,author:"",isbn:"",condition:"Non identifié",buy:price,buyFee:fee,wanted:"",status:"À mettre en vente",platforms:[],notes:"Acheté à "+p.seller,purchaseId:p.id};
+   db.books.push(book);p.bookIds.push(book.id);
+ }else{
+   const count=Number(pCount.value)||0;
+   if(count<1){alert("Indique le nombre de livres du lot.");return}
+   p.bookCount=count;p.equalCost=p.total/count;p.allocated=false;
+ }
+ db.purchases.push(p);
+ pBookTitle.value="";pSeller.value="";pPrice.value="";pFee.value="0";pNotes.value="";pCount.value="";lotPreview.innerHTML="";
+ save();alert(type==="lot"?"Lot enregistré. Tu pourras maintenant créer les livres du lot.":"Achat et livre enregistrés.");
+}
+function createBooksFromLot(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ for(let i=p.bookIds.length;i<p.bookCount;i++){
+   const title=prompt(`Titre du livre ${i+1} sur ${p.bookCount} :`);
+   if(title===null)return;
+   if(!title.trim()){alert("Le titre ne peut pas être vide.");i--;continue}
+   db.books.push({id:uid(),title:title.trim(),author:"",isbn:"",condition:"Non identifié",buy:p.equalCost,buyFee:0,wanted:"",status:"À mettre en vente",platforms:[],notes:"Lot acheté à "+p.seller,purchaseId:p.id});
+   p.bookIds.push(db.books[db.books.length-1].id);
+ }
+ p.allocated=p.bookIds.length>=p.bookCount;save();
+}
+function editLotCosts(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ let total=0;
+ for(const bid of p.bookIds){
+   const b=db.books.find(x=>x.id===bid); if(!b)continue;
+   const v=prompt(`Coût attribué à "${b.title}" (€)`,String(Number(b.buy||0).toFixed(2)));
+   if(v===null)return;
+   const n=Number(v); if(!Number.isFinite(n)||n<0){alert("Montant invalide.");return}
+   b.buy=n;b.buyFee=0;total+=n;
+ }
+ save();alert(Math.abs(total-p.total)<0.01?"Répartition exacte enregistrée.":`Répartition enregistrée. Total attribué : ${euro(total)} pour un lot de ${euro(p.total)}.`);
+}
+function addSale(){
+ const bookId=sBook.value, book=db.books.find(b=>b.id===bookId);
+ if(!book){alert("Choisis un livre.");return}
+ const price=Number(sPrice.value)||0,fee=Number(sFee.value)||0;if(price<=0){alert("Indique le prix de vente.");return}
+ db.sales.push({id:uid(),bookId,title:book.title,platform:sPlatform.value,price,fee,date:sDate.value||today(),buy:Number(book.buy)||0,buyFee:Number(book.buyFee)||0,previousStatus:book.status||"En vente"});
+ book.status="Vendu";save();alert("Vente enregistrée.");
+ sPrice.value="";sFee.value="0";
+}
+function renderStats(){
+ const stock=db.books.filter(b=>!["Vendu","Retiré"].includes(b.status));
+ const invested=stock.reduce((a,b)=>a+(Number(b.buy)||0)+(Number(b.buyFee)||0),0);
+ const desired=stock.reduce((a,b)=>a+(Number(b.wanted)||0),0);
+ const potential=stock.reduce((a,b)=>a+(Number(b.wanted)||0)-(Number(b.buy)||0)-(Number(b.buyFee)||0),0);
+ const ca=db.sales.reduce((a,s)=>a+s.price,0);
+ const real=db.sales.reduce((a,s)=>a+s.price-s.fee-s.buy-s.buyFee,0);
+ stats.innerHTML=[
+ ["Livres en stock",stock.length],["Investi en stock",euro(invested)],["Valeur souhaitée",euro(desired)],
+ ["Marge potentielle",euro(potential)],["Ventes",db.sales.length],["CA réalisé",euro(ca)],["Marge réelle",euro(real)]
+ ].map(x=>`<div class="stat">${x[0]}<b>${x[1]}</b></div>`).join("");
+ dashSales.innerHTML=db.sales.slice(-5).reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br><span class="small">${s.date} · ${s.platform}</span><br>Vendu ${euro(s.price)} · Marge réelle <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b></div>`).join("")||'<div class="empty">Aucune vente.</div>';
+}
+function renderBooks(){
+ const q=(search.value||"").toLowerCase();
+ const arr=db.books.filter(b=>[b.title,b.author,b.isbn].join(" ").toLowerCase().includes(q));
+ booksList.innerHTML=arr.map(b=>{
+  const cost=(Number(b.buy)||0)+(Number(b.buyFee)||0),margin=(Number(b.wanted)||0)-cost;
+  return `<div class="item"><strong>${esc(b.title)}</strong>${b.author?" — "+esc(b.author):""}<br>
+  <span class="badge">${esc(b.status)}</span> ${b.platforms.map(p=>`<span class="badge">${esc(p)}</span>`).join("")}
+  <div class="small">Achat : ${b.buy===""||b.buy==null?"inconnu":euro(cost)} · Prix souhaité : ${b.wanted?euro(b.wanted):"—"} · Marge potentielle : <span class="marge">${b.wanted?euro(margin):"—"}</span></div>
+  ${b.isbn?`<div class="small">ISBN : ${esc(b.isbn)}</div>`:""}
+  <div class="row"><button type="button" class="secondary" onclick="editBook('${b.id}')">Modifier</button><button type="button" class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
+ }).join("")||'<div class="empty">Aucun livre trouvé.</div>';
+}
+function renderPurchases(){
+ purchaseList.innerHTML=db.purchases.slice().reverse().map(p=>{
+  const type=p.type==="lot"?`Lot · ${p.bookCount} livres · coût moyen indicatif ${euro(p.equalCost)}`:"Livre individuel";
+  return `<div class="item"><strong>${type}</strong><br><span class="small">${p.date} · ${esc(p.seller)}</span><br>Total : <b>${euro(p.total)}</b>${p.notes?`<br><span class="small">${esc(p.notes)}</span>`:""}<div class="row"><button type="button" class="danger" onclick="deletePurchase('${p.id}')">Supprimer</button></div></div>`;
+ }).join("")||'<div class="empty">Aucun achat enregistré.</div>';
+
+ const lots=db.purchases.filter(p=>p.type==="lot");
+ lotAllocationList.innerHTML=lots.map(p=>{
+   const created=p.bookIds?.length||0;
+   return `<div class="item"><strong>Lot du ${p.date} — ${esc(p.seller)}</strong><br>
+   ${created}/${p.bookCount} livres créés · Total ${euro(p.total)} · Moyenne ${euro(p.equalCost)}
+   <div class="row"><button type="button" class="secondary" onclick="createBooksFromLot('${p.id}')">Créer les livres</button>
+   ${created?`<button type="button" class="secondary" onclick="editLotCosts('${p.id}')">Répartir le coût</button>`:""}
+   <button type="button" class="danger" onclick="deletePurchase('${p.id}')">Supprimer le lot</button></div></div>`;
+ }).join("")||'<div class="empty">Aucun lot à répartir.</div>';
+}
+function renderSales(){
+ sBook.innerHTML=db.books.filter(b=>b.status!=="Vendu").map(b=>`<option value="${b.id}">${esc(b.title)}${b.author?" — "+esc(b.author):""}${b.isbn?" · ISBN "+esc(b.isbn):""}</option>`).join("");
+ salesList.innerHTML=db.sales.slice().reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br>${s.date} · ${esc(s.platform)} · vendu ${euro(s.price)} · frais ${euro(s.fee)}<br>Marge réelle : <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b><div class="row"><button type="button" class="danger" onclick="deleteSale(\'${s.id}\')">Supprimer</button></div></div>`).join("")||'<div class="empty">Aucune vente.</div>';
+}
+function editBook(id){
+ const b=db.books.find(x=>x.id===id); if(!b)return;
+ const title=prompt("Titre :",b.title); if(title===null)return;
+ if(!title.trim()){alert("Le titre ne peut pas être vide.");return}
+ const author=prompt("Auteur :",b.author||""); if(author===null)return;
+ const isbn=prompt("ISBN :",b.isbn||""); if(isbn===null)return;
+ const wanted=prompt("Prix de vente souhaité (€) :",b.wanted??""); if(wanted===null)return;
+ const status=prompt("Statut (À mettre en vente / En vente / En attente / À identifier / Retiré / Vendu) :",b.status||""); if(status===null)return;
+ b.title=title.trim(); b.author=author.trim(); b.isbn=isbn.trim(); b.wanted=wanted; b.status=status.trim()||b.status;
+ save(); alert("Livre modifié.");
+}
+function deletePurchase(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ const count=p.bookIds?.length||0;
+ const message=p.type==="lot" && count
+   ? `Supprimer ce lot et les ${count} livre(s) créés avec lui ?`
+   : "Supprimer cet achat ?";
+ if(!confirm(message))return;
+ const ids=new Set(p.bookIds||[]);
+ db.purchases=db.purchases.filter(x=>x.id!==id);
+ if(ids.size) db.books=db.books.filter(b=>!ids.has(b.id));
+ save();
+ alert("Achat supprimé.");
+}
+function deleteSale(id){
+ const s=db.sales.find(x=>x.id===id); if(!s)return;
+ if(!confirm("Supprimer cette vente ?"))return;
+ db.sales=db.sales.filter(x=>x.id!==id);
+ const book=db.books.find(b=>b.id===s.bookId);
+ if(book) book.status=s.previousStatus||"En vente";
+ save();
+ alert("Vente supprimée.");
+}
+function deleteBook(id){if(confirm("Supprimer ce livre ?")){db.books=db.books.filter(b=>b.id!==id);save()}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function renderAll(){renderStats();renderBooks();renderPurchases();renderSales()}
+renderAll();
+updateLotPreview();
+</script>
+</body>
+</html>
