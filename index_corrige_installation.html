@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#222222">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Suivi de mes livres</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f5f7;color:#222}
+header{background:#222;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:21px}
+nav{display:flex;gap:7px;overflow:auto;margin-top:12px}
+nav button{border:0;border-radius:9px;padding:9px 12px;white-space:nowrap;background:#444;color:#fff}
+nav button.active{background:#fff;color:#222}
+main{max-width:900px;margin:auto;padding:14px}
+section{display:none}
+section.active{display:block}
+.card{background:#fff;border-radius:14px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #0000000d}
+h2{font-size:19px;margin:0 0 13px}
+h3{font-size:16px;margin:8px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:#f1f1f4;border-radius:12px;padding:12px}
+.stat b{display:block;font-size:22px;margin-top:5px}
+label{display:block;font-size:13px;font-weight:bold;margin:10px 0 5px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:9px;font-size:15px;background:#fff}
+textarea{min-height:70px}
+button.primary{background:#222;color:white;border:0;border-radius:9px;padding:11px 15px;margin-top:12px}
+button.secondary{background:#eee;border:0;border-radius:9px;padding:9px 12px}
+button.danger{background:#b42318;color:white;border:0;border-radius:9px;padding:8px 10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item{border:1px solid #ddd;border-radius:11px;padding:12px;margin:8px 0;background:#fff}
+.item strong{font-size:16px}
+.small{font-size:12px;color:#666}
+.badge{display:inline-block;padding:4px 7px;border-radius:7px;background:#eee;font-size:12px;margin:2px}
+.marge{font-weight:bold}
+.empty{color:#777;text-align:center;padding:25px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{font-weight:normal;margin:0;background:#f0f0f2;padding:7px 9px;border-radius:8px}
+.checks input{width:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+@media(max-width:600px){main{padding:10px}.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+<h1>📚 Suivi de mes livres</h1>
+<nav>
+<button class="active" data-tab="dashboard">Tableau de bord</button>
+<button data-tab="books">Mes livres</button>
+<button data-tab="purchases">Achats</button>
+<button data-tab="sales">Ventes</button>
+</nav>
+</header>
+<main>
+<section id="dashboard" class="active">
+<div class="card"><h2>Tableau de bord</h2><div class="grid" id="stats"></div></div>
+<div class="card"><h3>Dernières ventes</h3><div id="dashSales"></div></div>
+</section>
+
+<section id="books">
+<div class="card">
+<h2>Ajouter un livre</h2>
+<label>Titre *</label><input id="bTitle">
+<label>Auteur</label><input id="bAuthor">
+<label>ISBN</label><input id="bIsbn">
+<label>État</label><select id="bCondition"><option>Très bon état</option><option>Bon état</option><option>État correct</option><option>À restaurer</option><option>Non identifié</option></select>
+<label>Prix d'achat (€)</label><input id="bBuy" type="number" step="0.01">
+<label>Frais d'achat (€)</label><input id="bBuyFee" type="number" step="0.01" value="0">
+<label>Prix de vente souhaité (€)</label><input id="bWanted" type="number" step="0.01">
+<label>Plateformes</label>
+<div class="checks">
+<label><input type="checkbox" name="platform" value="Vinted"> Vinted</label>
+<label><input type="checkbox" name="platform" value="Leboncoin"> Leboncoin</label>
+<label><input type="checkbox" name="platform" value="Le Bouquin Français"> Le Bouquin Français</label>
+<label><input type="checkbox" name="platform" value="Book Village"> Book Village</label>
+<label><input type="checkbox" name="platform" value="Autre"> Autre</label>
+</div>
+<label>Statut</label><select id="bStatus"><option>À mettre en vente</option><option>En vente</option><option>En attente</option><option>À identifier</option><option>Retiré</option></select>
+<label>Notes</label><textarea id="bNotes"></textarea>
+<button class="primary" onclick="addBook()">Ajouter le livre</button>
+</div>
+<div class="card">
+<h2>Mon stock</h2>
+<input id="search" placeholder="🔎 Rechercher titre, auteur ou ISBN" oninput="renderBooks()">
+<div id="booksList"></div>
+</div>
+</section>
+
+<section id="purchases">
+<div class="card">
+<h2>Nouvel achat auprès d'un particulier</h2>
+<label>Type d'achat</label><select id="pType" onchange="toggleLot()"><option value="individual">Livre individuel</option><option value="lot">Lot de livres</option></select>
+<label>Date</label><input id="pDate" type="date">
+<label>Vendeur / particulier</label><input id="pSeller">
+<label>Prix payé (€)</label><input id="pPrice" type="number" step="0.01">
+<label>Frais (€)</label><input id="pFee" type="number" step="0.01" value="0">
+<div id="individualFields">
+<label>Titre du livre</label><input id="pBookTitle">
+</div>
+<div id="lotFields" style="display:none">
+<label>Nombre de livres dans le lot</label><input id="pCount" type="number" min="1" oninput="updateLotPreview()">
+<p class="small">Le coût moyen est indicatif. Après l'achat, tu pourras créer les livres du lot et attribuer à chacun son coût réel.</p>
+<div id="lotPreview"></div>
+</div>
+<label>Notes</label><textarea id="pNotes"></textarea>
+<button class="primary" onclick="addPurchase()">Enregistrer l'achat</button>
+</div>
+<div class="card"><h2>Historique des achats</h2><div id="purchaseList"></div></div>
+<div class="card"><h2>Lots à répartir</h2><div id="lotAllocationList"></div></div>
+</section>
+
+<section id="sales">
+<div class="card">
+<h2>Enregistrer une vente</h2>
+<label>Livre</label><select id="sBook"></select>
+<label>Plateforme</label><select id="sPlatform"><option>Vinted</option><option>Leboncoin</option><option>Le Bouquin Français</option><option>Book Village</option><option>Autre</option></select>
+<label>Prix réellement vendu (€)</label><input id="sPrice" type="number" step="0.01">
+<label>Frais de vente (€)</label><input id="sFee" type="number" step="0.01" value="0">
+<label>Date</label><input id="sDate" type="date">
+<button class="primary" onclick="addSale()">Enregistrer la vente</button>
+</div>
+<div class="card"><h2>Historique des ventes</h2><div id="salesList"></div></div>
+</section>
+</main>
+
+<script>
+const KEY="suiviLivresV1Plus";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"books":[],"purchases":[],"sales":[]}');
+const euro=n=> (Number(n)||0).toFixed(2).replace('.',',')+" €";
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));renderAll()};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>new Date().toISOString().slice(0,10);
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");renderAll();
+});
+document.getElementById("pDate").value=today();
+document.getElementById("sDate").value=today();
+
+function toggleLot(){
+ const lot=document.getElementById("pType").value==="lot";
+ document.getElementById("lotFields").style.display=lot?"block":"none";
+ document.getElementById("individualFields").style.display=lot?"none":"block";
+}
+function addBook(){
+ const title=bTitle.value.trim(); if(!title){alert("Indique au moins le titre.");return}
+ const platforms=[...document.querySelectorAll('input[name="platform"]:checked')].map(x=>x.value);
+ db.books.push({id:uid(),title,author:bAuthor.value.trim(),isbn:bIsbn.value.trim(),condition:bCondition.value,buy:bBuy.value,buyFee:bBuyFee.value,wanted:bWanted.value,status:bStatus.value,platforms,notes:bNotes.value.trim(),purchaseId:null});
+ ["bTitle","bAuthor","bIsbn","bBuy","bWanted","bNotes"].forEach(id=>document.getElementById(id).value="");
+ document.querySelectorAll('input[name="platform"]').forEach(x=>x.checked=false);
+ save(); alert("Livre ajouté.");
+}
+function updateLotPreview(){
+ const count=Number(pCount.value)||0, price=Number(pPrice.value)||0, fee=Number(pFee.value)||0;
+ lotPreview.innerHTML=count>0?`<div class="small">Total : <b>${euro(price+fee)}</b> · coût moyen indicatif : <b>${euro((price+fee)/count)}</b>/livre.</div>`:"";
+}
+function addPurchase(){
+ const type=pType.value, price=Number(pPrice.value)||0, fee=Number(pFee.value)||0;
+ if(!pDate.value||!pSeller.value.trim()||price<=0){alert("Date, vendeur et prix sont nécessaires.");return}
+ const p={id:uid(),type,date:pDate.value,seller:pSeller.value.trim(),price,fee,total:price+fee,notes:pNotes.value.trim(),bookIds:[]};
+ if(type==="individual"){
+   const title=pBookTitle.value.trim(); if(!title){alert("Indique le titre du livre.");return}
+   const book={id:uid(),title,author:"",isbn:"",condition:"Non identifié",buy:price,buyFee:fee,wanted:"",status:"À mettre en vente",platforms:[],notes:"Acheté à "+p.seller,purchaseId:p.id};
+   db.books.push(book);p.bookIds.push(book.id);
+ }else{
+   const count=Number(pCount.value)||0;
+   if(count<1){alert("Indique le nombre de livres du lot.");return}
+   p.bookCount=count;p.equalCost=p.total/count;p.allocated=false;
+ }
+ db.purchases.push(p);
+ pBookTitle.value="";pSeller.value="";pPrice.value="";pFee.value="0";pNotes.value="";pCount.value="";lotPreview.innerHTML="";
+ save();alert(type==="lot"?"Lot enregistré. Tu pourras maintenant créer les livres du lot.":"Achat et livre enregistrés.");
+}
+function createBooksFromLot(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ for(let i=p.bookIds.length;i<p.bookCount;i++){
+   const title=prompt(`Titre du livre ${i+1} sur ${p.bookCount} :`);
+   if(title===null)return;
+   if(!title.trim()){alert("Le titre ne peut pas être vide.");i--;continue}
+   db.books.push({id:uid(),title:title.trim(),author:"",isbn:"",condition:"Non identifié",buy:p.equalCost,buyFee:0,wanted:"",status:"À mettre en vente",platforms:[],notes:"Lot acheté à "+p.seller,purchaseId:p.id});
+   p.bookIds.push(db.books[db.books.length-1].id);
+ }
+ p.allocated=p.bookIds.length>=p.bookCount;save();
+}
+function editLotCosts(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ let total=0;
+ for(const bid of p.bookIds){
+   const b=db.books.find(x=>x.id===bid); if(!b)continue;
+   const v=prompt(`Coût attribué à "${b.title}" (€)`,String(Number(b.buy||0).toFixed(2)));
+   if(v===null)return;
+   const n=Number(v); if(!Number.isFinite(n)||n<0){alert("Montant invalide.");return}
+   b.buy=n;b.buyFee=0;total+=n;
+ }
+ save();alert(Math.abs(total-p.total)<0.01?"Répartition exacte enregistrée.":`Répartition enregistrée. Total attribué : ${euro(total)} pour un lot de ${euro(p.total)}.`);
+}
+function addSale(){
+ const bookId=sBook.value, book=db.books.find(b=>b.id===bookId);
+ if(!book){alert("Choisis un livre.");return}
+ const price=Number(sPrice.value)||0,fee=Number(sFee.value)||0;if(price<=0){alert("Indique le prix de vente.");return}
+ db.sales.push({id:uid(),bookId,title:book.title,platform:sPlatform.value,price,fee,date:sDate.value||today(),buy:Number(book.buy)||0,buyFee:Number(book.buyFee)||0,previousStatus:book.status||"En vente"});
+ book.status="Vendu";save();alert("Vente enregistrée.");
+ sPrice.value="";sFee.value="0";
+}
+function renderStats(){
+ const stock=db.books.filter(b=>!["Vendu","Retiré"].includes(b.status));
+ const invested=stock.reduce((a,b)=>a+(Number(b.buy)||0)+(Number(b.buyFee)||0),0);
+ const desired=stock.reduce((a,b)=>a+(Number(b.wanted)||0),0);
+ const potential=stock.reduce((a,b)=>a+(Number(b.wanted)||0)-(Number(b.buy)||0)-(Number(b.buyFee)||0),0);
+ const ca=db.sales.reduce((a,s)=>a+s.price,0);
+ const real=db.sales.reduce((a,s)=>a+s.price-s.fee-s.buy-s.buyFee,0);
+ stats.innerHTML=[
+ ["Livres en stock",stock.length],["Investi en stock",euro(invested)],["Valeur souhaitée",euro(desired)],
+ ["Marge potentielle",euro(potential)],["Ventes",db.sales.length],["CA réalisé",euro(ca)],["Marge réelle",euro(real)]
+ ].map(x=>`<div class="stat">${x[0]}<b>${x[1]}</b></div>`).join("");
+ dashSales.innerHTML=db.sales.slice(-5).reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br><span class="small">${s.date} · ${s.platform}</span><br>Vendu ${euro(s.price)} · Marge réelle <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b></div>`).join("")||'<div class="empty">Aucune vente.</div>';
+}
+function renderBooks(){
+ const q=(search.value||"").toLowerCase();
+ const arr=db.books.filter(b=>[b.title,b.author,b.isbn].join(" ").toLowerCase().includes(q));
+ booksList.innerHTML=arr.map(b=>{
+  const cost=(Number(b.buy)||0)+(Number(b.buyFee)||0),margin=(Number(b.wanted)||0)-cost;
+  return `<div class="item"><strong>${esc(b.title)}</strong>${b.author?" — "+esc(b.author):""}<br>
+  <span class="badge">${esc(b.status)}</span> ${b.platforms.map(p=>`<span class="badge">${esc(p)}</span>`).join("")}
+  <div class="small">Achat : ${b.buy===""||b.buy==null?"inconnu":euro(cost)} · Prix souhaité : ${b.wanted?euro(b.wanted):"—"} · Marge potentielle : <span class="marge">${b.wanted?euro(margin):"—"}</span></div>
+  ${b.isbn?`<div class="small">ISBN : ${esc(b.isbn)}</div>`:""}
+  <div class="row"><button type="button" class="secondary" onclick="editBook('${b.id}')">Modifier</button><button type="button" class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
+ }).join("")||'<div class="empty">Aucun livre trouvé.</div>';
+}
+function renderPurchases(){
+ purchaseList.innerHTML=db.purchases.slice().reverse().map(p=>{
+  const type=p.type==="lot"?`Lot · ${p.bookCount} livres · coût moyen indicatif ${euro(p.equalCost)}`:"Livre individuel";
+  return `<div class="item"><strong>${type}</strong><br><span class="small">${p.date} · ${esc(p.seller)}</span><br>Total : <b>${euro(p.total)}</b>${p.notes?`<br><span class="small">${esc(p.notes)}</span>`:""}<div class="row"><button type="button" class="danger" onclick="deletePurchase('${p.id}')">Supprimer</button></div></div>`;
+ }).join("")||'<div class="empty">Aucun achat enregistré.</div>';
+
+ const lots=db.purchases.filter(p=>p.type==="lot");
+ lotAllocationList.innerHTML=lots.map(p=>{
+   const created=p.bookIds?.length||0;
+   return `<div class="item"><strong>Lot du ${p.date} — ${esc(p.seller)}</strong><br>
+   ${created}/${p.bookCount} livres créés · Total ${euro(p.total)} · Moyenne ${euro(p.equalCost)}
+   <div class="row"><button type="button" class="secondary" onclick="createBooksFromLot('${p.id}')">Créer les livres</button>
+   ${created?`<button type="button" class="secondary" onclick="editLotCosts('${p.id}')">Répartir le coût</button>`:""}
+   <button type="button" class="danger" onclick="deletePurchase('${p.id}')">Supprimer le lot</button></div></div>`;
+ }).join("")||'<div class="empty">Aucun lot à répartir.</div>';
+}
+function renderSales(){
+ sBook.innerHTML=db.books.filter(b=>b.status!=="Vendu").map(b=>`<option value="${b.id}">${esc(b.title)}${b.author?" — "+esc(b.author):""}${b.isbn?" · ISBN "+esc(b.isbn):""}</option>`).join("");
+ salesList.innerHTML=db.sales.slice().reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br>${s.date} · ${esc(s.platform)} · vendu ${euro(s.price)} · frais ${euro(s.fee)}<br>Marge réelle : <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b><div class="row"><button type="button" class="danger" onclick="deleteSale(\'${s.id}\')">Supprimer</button></div></div>`).join("")||'<div class="empty">Aucune vente.</div>';
+}
+function editBook(id){
+ const b=db.books.find(x=>x.id===id); if(!b)return;
+ const title=prompt("Titre :",b.title); if(title===null)return;
+ if(!title.trim()){alert("Le titre ne peut pas être vide.");return}
+ const author=prompt("Auteur :",b.author||""); if(author===null)return;
+ const isbn=prompt("ISBN :",b.isbn||""); if(isbn===null)return;
+ const wanted=prompt("Prix de vente souhaité (€) :",b.wanted??""); if(wanted===null)return;
+ const status=prompt("Statut (À mettre en vente / En vente / En attente / À identifier / Retiré / Vendu) :",b.status||""); if(status===null)return;
+ b.title=title.trim(); b.author=author.trim(); b.isbn=isbn.trim(); b.wanted=wanted; b.status=status.trim()||b.status;
+ save(); alert("Livre modifié.");
+}
+function deletePurchase(id){
+ const p=db.purchases.find(x=>x.id===id); if(!p)return;
+ const count=p.bookIds?.length||0;
+ const message=p.type==="lot" && count
+   ? `Supprimer ce lot et les ${count} livre(s) créés avec lui ?`
+   : "Supprimer cet achat ?";
+ if(!confirm(message))return;
+ const ids=new Set(p.bookIds||[]);
+ db.purchases=db.purchases.filter(x=>x.id!==id);
+ if(ids.size) db.books=db.books.filter(b=>!ids.has(b.id));
+ save();
+ alert("Achat supprimé.");
+}
+function deleteSale(id){
+ const s=db.sales.find(x=>x.id===id); if(!s)return;
+ if(!confirm("Supprimer cette vente ?"))return;
+ db.sales=db.sales.filter(x=>x.id!==id);
+ const book=db.books.find(b=>b.id===s.bookId);
+ if(book) book.status=s.previousStatus||"En vente";
+ save();
+ alert("Vente supprimée.");
+}
+function deleteBook(id){if(confirm("Supprimer ce livre ?")){db.books=db.books.filter(b=>b.id!==id);save()}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function renderAll(){renderStats();renderBooks();renderPurchases();renderSales()}
+renderAll();
+updateLotPreview();
+</script>
+</body>
+</html>
