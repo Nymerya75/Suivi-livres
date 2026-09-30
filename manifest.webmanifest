@@ -1,0 +1,25 @@
+{
+  "name": "Suivi de mes livres",
+  "short_name": "Mes livres",
+  "description": "Gestion du stock, des achats, des lots et des ventes de livres.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#5b5bd6",
+  "lang": "fr-FR",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
