@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#222222">
-<link rel="manifest" href="./manifest.webmanifest">
 <title>Suivi de mes livres</title>
 <style>
 *{box-sizing:border-box}
@@ -232,23 +230,6 @@ function renderBooks(){
   <div class="row"><button class="secondary" onclick="editBook('${b.id}')">Modifier</button><button class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
  }).join("")||'<div class="empty">Aucun livre trouvé.</div>';
 }
-
-function editBook(id){
- const b=db.books.find(x=>x.id===id); if(!b)return;
- const title=prompt("Titre",b.title); if(title===null)return; if(!title.trim()){alert("Le titre ne peut pas être vide.");return}
- const author=prompt("Auteur",b.author||""); if(author===null)return;
- const isbn=prompt("ISBN",b.isbn||""); if(isbn===null)return;
- const condition=prompt("État",b.condition||""); if(condition===null)return;
- const buy=prompt("Prix d'achat (€)",b.buy==null?"":String(b.buy)); if(buy===null)return;
- const buyFee=prompt("Frais d'achat (€)",b.buyFee==null?"0":String(b.buyFee)); if(buyFee===null)return;
- const wanted=prompt("Prix de vente souhaité (€)",b.wanted==null?"":String(b.wanted)); if(wanted===null)return;
- const status=prompt("Statut",b.status||""); if(status===null)return;
- const notes=prompt("Notes",b.notes||""); if(notes===null)return;
- const validMoney=v=>v.trim()===""||Number.isFinite(Number(v))&&Number(v)>=0;
- if(!validMoney(buy)||!validMoney(buyFee)||!validMoney(wanted)){alert("Un montant saisi est invalide.");return}
- b.title=title.trim();b.author=author.trim();b.isbn=isbn.trim();b.condition=condition.trim()||"Non identifié";b.buy=buy.trim();b.buyFee=buyFee.trim()===""?"0":buyFee.trim();b.wanted=wanted.trim();b.status=status.trim()||"À mettre en vente";b.notes=notes.trim();
- save();
-}
 function renderPurchases(){
  purchaseList.innerHTML=db.purchases.slice().reverse().map(p=>{
   const type=p.type==="lot"?`Lot · ${p.bookCount} livres · coût moyen indicatif ${euro(p.equalCost)}`:"Livre individuel";
@@ -265,9 +246,19 @@ function renderPurchases(){
  }).join("")||'<div class="empty">Aucun lot à répartir.</div>';
 }
 function renderSales(){
- const available=db.books.filter(b=>b.status!=="Vendu");
- sBook.innerHTML=available.length?available.map((b,i)=>`<option value="${esc(b.id)}">${i+1}. ${esc(b.title)}${b.author?" — "+esc(b.author):""}</option>`).join(""):"<option value="">Aucun livre disponible</option>";
+ sBook.innerHTML=db.books.filter(b=>b.status!=="Vendu").map(b=>`<option value="${b.id}">${esc(b.title)}${b.author?" — "+esc(b.author):""}${b.isbn?" · ISBN "+esc(b.isbn):""}</option>`).join("");
  salesList.innerHTML=db.sales.slice().reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br>${s.date} · ${s.platform} · vendu ${euro(s.price)} · frais ${euro(s.fee)}<br>Marge réelle : <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b></div>`).join("")||'<div class="empty">Aucune vente.</div>';
+}
+function editBook(id){
+ const b=db.books.find(x=>x.id===id); if(!b)return;
+ const title=prompt("Titre :",b.title); if(title===null)return;
+ if(!title.trim()){alert("Le titre ne peut pas être vide.");return}
+ const author=prompt("Auteur :",b.author||""); if(author===null)return;
+ const isbn=prompt("ISBN :",b.isbn||""); if(isbn===null)return;
+ const wanted=prompt("Prix de vente souhaité (€) :",b.wanted??""); if(wanted===null)return;
+ const status=prompt("Statut (À mettre en vente / En vente / En attente / À identifier / Retiré / Vendu) :",b.status||""); if(status===null)return;
+ b.title=title.trim(); b.author=author.trim(); b.isbn=isbn.trim(); b.wanted=wanted; b.status=status.trim()||b.status;
+ save(); alert("Livre modifié.");
 }
 function deleteBook(id){if(confirm("Supprimer ce livre ?")){db.books=db.books.filter(b=>b.id!==id);save()}}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
@@ -275,6 +266,5 @@ function renderAll(){renderStats();renderBooks();renderPurchases();renderSales()
 renderAll();
 updateLotPreview();
 </script>
-<script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js")); }</script>
 </body>
 </html>
