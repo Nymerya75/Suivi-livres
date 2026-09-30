@@ -229,8 +229,25 @@ function renderBooks(){
   <span class="badge">${esc(b.status)}</span> ${b.platforms.map(p=>`<span class="badge">${esc(p)}</span>`).join("")}
   <div class="small">Achat : ${b.buy===""||b.buy==null?"inconnu":euro(cost)} · Prix souhaité : ${b.wanted?euro(b.wanted):"—"} · Marge potentielle : <span class="marge">${b.wanted?euro(margin):"—"}</span></div>
   ${b.isbn?`<div class="small">ISBN : ${esc(b.isbn)}</div>`:""}
-  <div class="row"><button class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
+  <div class="row"><button class="secondary" onclick="editBook('${b.id}')">Modifier</button><button class="danger" onclick="deleteBook('${b.id}')">Supprimer</button></div></div>`;
  }).join("")||'<div class="empty">Aucun livre trouvé.</div>';
+}
+
+function editBook(id){
+ const b=db.books.find(x=>x.id===id); if(!b)return;
+ const title=prompt("Titre",b.title); if(title===null)return; if(!title.trim()){alert("Le titre ne peut pas être vide.");return}
+ const author=prompt("Auteur",b.author||""); if(author===null)return;
+ const isbn=prompt("ISBN",b.isbn||""); if(isbn===null)return;
+ const condition=prompt("État",b.condition||""); if(condition===null)return;
+ const buy=prompt("Prix d'achat (€)",b.buy==null?"":String(b.buy)); if(buy===null)return;
+ const buyFee=prompt("Frais d'achat (€)",b.buyFee==null?"0":String(b.buyFee)); if(buyFee===null)return;
+ const wanted=prompt("Prix de vente souhaité (€)",b.wanted==null?"":String(b.wanted)); if(wanted===null)return;
+ const status=prompt("Statut",b.status||""); if(status===null)return;
+ const notes=prompt("Notes",b.notes||""); if(notes===null)return;
+ const validMoney=v=>v.trim()===""||Number.isFinite(Number(v))&&Number(v)>=0;
+ if(!validMoney(buy)||!validMoney(buyFee)||!validMoney(wanted)){alert("Un montant saisi est invalide.");return}
+ b.title=title.trim();b.author=author.trim();b.isbn=isbn.trim();b.condition=condition.trim()||"Non identifié";b.buy=buy.trim();b.buyFee=buyFee.trim()===""?"0":buyFee.trim();b.wanted=wanted.trim();b.status=status.trim()||"À mettre en vente";b.notes=notes.trim();
+ save();
 }
 function renderPurchases(){
  purchaseList.innerHTML=db.purchases.slice().reverse().map(p=>{
@@ -248,7 +265,8 @@ function renderPurchases(){
  }).join("")||'<div class="empty">Aucun lot à répartir.</div>';
 }
 function renderSales(){
- sBook.innerHTML=db.books.filter(b=>b.status!=="Vendu").map(b=>`<option value="${b.id}">${esc(b.title)}</option>`).join("");
+ const available=db.books.filter(b=>b.status!=="Vendu");
+ sBook.innerHTML=available.length?available.map((b,i)=>`<option value="${esc(b.id)}">${i+1}. ${esc(b.title)}${b.author?" — "+esc(b.author):""}</option>`).join(""):"<option value="">Aucun livre disponible</option>";
  salesList.innerHTML=db.sales.slice().reverse().map(s=>`<div class="item"><strong>${esc(s.title)}</strong><br>${s.date} · ${s.platform} · vendu ${euro(s.price)} · frais ${euro(s.fee)}<br>Marge réelle : <b>${euro(s.price-s.fee-s.buy-s.buyFee)}</b></div>`).join("")||'<div class="empty">Aucune vente.</div>';
 }
 function deleteBook(id){if(confirm("Supprimer ce livre ?")){db.books=db.books.filter(b=>b.id!==id);save()}}
